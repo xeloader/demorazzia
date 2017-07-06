@@ -120,22 +120,45 @@ class PropListItem extends Component {
   }
 
   getParties() {
-    return this.props.senders.map()
+    let parties = new Set();
+    this.props.senders.forEach((sender) => {
+      parties.add(sender.party);
+    });
+    return Array.from(parties);
   }
 
   render() {
 
+    console.log(this.getParties());
+
     const { score } = this.state;
-    const { title, url } = this.props;
+    const { title, url, motionId, body } = this.props;
+    const blockStyle = { display: "block" };
+
+    const flagNode = this.getParties().map((party) => {
+      return <img className="partyFlag" src={`./images/logos/${party}.jpg`}/>
+    });
+
+    const cssClasses = this.getParties().map((party) => {
+      return `party-${party}`;
+    }).join(' ');
 
     return (
-      <li>
-        <a href={ url } target="_blank">
-          <p>{ title }</p>
-        </a>
-        <button name="up" onClick={ this.handleVote(UP).bind(this) }>UP</button>
-        <p>{ score } 🏆</p>
-        <button name="down" onClick={ this.handleVote(DOWN).bind(this) }>DOWN</button>
+      <li className={`propo-item ${cssClasses}`}>
+        <div className="info">
+          <a href={ url } target="_blank">
+            <p>{ title } : { motionId } </p>
+          </a>
+          <p className="body">{ body }</p>
+        </div>
+        <div className="voting">
+          <button name="up" onClick={ this.handleVote(UP).bind(this) } style={blockStyle}>⬆️</button>
+          <p>{ score } 🏆</p>
+          <button name="down" onClick={ this.handleVote(DOWN).bind(this) } style={blockStyle}>⬇️</button>
+        </div>
+        <div className="flagContainer">
+          { flagNode }
+        </div>
       </li>
     )
   }
