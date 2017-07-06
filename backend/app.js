@@ -22,7 +22,6 @@ const con = mysql.createConnection({
   app.use(cors()); // enable cross origin requests
 
   app.post('/props/:id', (req, res) => {
-    console.log(req.params, req.body);
     if(req.body.action) {
       const action = req.body.action.toLowerCase();
       switch(action) {
@@ -41,8 +40,6 @@ const con = mysql.createConnection({
               sql: P_QUERY
             }, (err, result) => {
               res.json({ success: !err, data: { vote, propId } });
-              console.log(result);
-              
             });
           }
         break;
@@ -54,6 +51,7 @@ const con = mysql.createConnection({
 
   app.get('/props/:p', (req, res) => {
 
+    // IDEA, concat the persons and then parse client wise.
     const QUERY = `
       SELECT 
         p.id,
@@ -94,13 +92,12 @@ const con = mysql.createConnection({
 
       const PER_PAGE = 25;
       const start = parseInt(req.params.p) * PER_PAGE;
-      console.log(start, PER_PAGE); 
 
       const P_QUERY = mysql.format(QUERY, [start, PER_PAGE]);
       con.query({
         sql: P_QUERY
       }, (err, props) => {
-        console.log(err);
+        if(err) { console.log(err); }
         let orderedProp = {};
         props.forEach((prop) => {
           const { motionId } = prop;

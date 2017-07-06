@@ -1,3 +1,71 @@
 .App {
   text-align: center;
 }
+
+.party-MP {
+  background-color: green;
+  color: red;
+}
+
+.party-M {
+  background-color: lightskyblue;
+  color: black;
+}
+
+.party-C {
+  background-color: greenyellow;
+  color: black;
+}
+
+.party-L {
+  background-color: blue;
+  color: white;
+}
+
+.party-KD {
+  background-color: navy;
+  color: green;
+}
+
+.party-SD {
+  background-color: skyblue;
+  color: yellow;
+}
+
+.party-S {
+  background-color: red;
+  color: white;
+}
+
+.propo-item .body {
+  max-height: 75px;
+  overflow-y: hidden;
+}
+
+.propo-item .flagContainer {
+  float: left;
+  clear: both;
+}
+
+.propo-item .partyFlag {
+  width: 32px;
+  height: 32px;
+}
+.propo-item .voting button {
+  width: 100%;
+}
+.propo-item .voting {
+  width: 25%;
+  float: right;
+  text-align: center;
+}
+
+.propo-item .info {
+  width: 75%;
+  float: left;
+} 
+.propo-item {
+  text-align: left;
+  height: 250px;
+  list-style: none;
+}
