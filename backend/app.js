@@ -19,7 +19,38 @@ const con = mysql.createConnection({
   app.use(bodyParser.json({ type: '*/*' })); // matches every filetype to JSON
   app.use(bodyParser.urlencoded({ extended: true }));
 
-  app.get('/props/', (req, res) => {
+  app.post('/props/:id', (req, res) => {
+    console.log(req.params, req.body);
+    if(req.body.action) {
+      const action = req.body.action.toLowerCase();
+      switch(action) {
+        case "vote":
+          if(req.body.value) {
+            const vote = req.body.value;
+            const propId = req.params.id;
+            const QUERY = `
+              INSERT INTO proposition_votes
+              (proposition_id, vote)
+              VALUES
+              (?, ?)
+            `;
+            const P_QUERY = mysql.format(QUERY, [propId, vote])
+            con.query({
+              sql: P_QUERY
+            }, (err, result) => {
+              res.json({ success: !err, data: { vote, propId } });
+              console.log(result);
+              
+            });
+          }
+        break;
+      }
+    } else {
+      res.status(401).send('Fuck off boring asshole');
+    }
+  })
+
+  app.get('/props/:p', (req, res) => {
 
     const QUERY = `
       SELECT 
@@ -28,10 +59,21 @@ const con = mysql.createConnection({
         p.body,
         p.motion_id as motionId,
         p.yrkanden,
+        p.pdf_url as pdfUrl,
+        p.url,
         pi.id as partyId,
         pi.symbol as party,
         po.id as politicianId,
-        po.name as politician
+        po.name as politician,
+        po.picture_url as pictureUrl,
+        (
+          SELECT 
+            SUM(IF(pv.vote = 'UP', 1, -1)) 
+          FROM 
+            proposition_votes as pv 
+          WHERE 
+            pv.proposition_id = p.id
+        ) as score
       FROM proposition_senders as ps
       INNER JOIN propositions as p
       ON p.id = ps.proposition_id
@@ -39,10 +81,18 @@ const con = mysql.createConnection({
       ON po.id = ps.politician_id
       INNER JOIN parties as pi
       ON po.party_id = pi.id
+      LEFT OUTER JOIN proposition_votes as pv
+      ON pv.proposition_id = p.id
       ORDER BY p.motion_id DESC
-      LIMIT ?
+      -- ORDER BY score DESC
+      LIMIT ?, ?
     `;
-    const P_QUERY = mysql.format(QUERY, 1);
+
+    const PER_PAGE = 25;
+    const start = parseInt(req.params.p) * PER_PAGE;
+    console.log(start, PER_PAGE); 
+
+    const P_QUERY = mysql.format(QUERY, [start, PER_PAGE]);
     con.query({
       sql: P_QUERY
     }, (err, props) => {
@@ -50,15 +100,16 @@ const con = mysql.createConnection({
       props.forEach((prop) => {
         const { motionId } = prop;
         if(!orderedProp[motionId]) { // if the prop doesnt exist
-          const { id, title, body, yrkanden } = prop;
-          orderedProp[motionId] = { id, title, body, motionId, yrkanden, senders: [] };
+          const { id, title, body, yrkanden, score, pdfUrl, url } = prop;
+          orderedProp[motionId] = { id, title, score, body, motionId, yrkanden, senders: [] };
         }
-        const { partyId, party, politicianId, politician } = prop;
+        const { partyId, party, politicianId, politician, pictureUrl } = prop;
         orderedProp[motionId].senders.push({ 
           partyId, 
           politicianId, 
           party, 
-          politician 
+          politician,
+          pictureUrl
         });
       })
       res.json(orderedProp);
