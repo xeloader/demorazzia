@@ -1,6 +1,7 @@
 import express from 'express';
 import bodyParser from 'body-parser';
 import mysql from 'mysql';
+import cors from 'cors';
 import 'source-map-support/register';
 
 const app = express();
@@ -18,6 +19,7 @@ const con = mysql.createConnection({
 
   app.use(bodyParser.json({ type: '*/*' })); // matches every filetype to JSON
   app.use(bodyParser.urlencoded({ extended: true }));
+  app.use(cors()); // enable cross origin requests
 
   app.post('/props/:id', (req, res) => {
     console.log(req.params, req.body);
@@ -88,32 +90,39 @@ const con = mysql.createConnection({
       LIMIT ?, ?
     `;
 
-    const PER_PAGE = 25;
-    const start = parseInt(req.params.p) * PER_PAGE;
-    console.log(start, PER_PAGE); 
+    if(req.params.p) {
 
-    const P_QUERY = mysql.format(QUERY, [start, PER_PAGE]);
-    con.query({
-      sql: P_QUERY
-    }, (err, props) => {
-      let orderedProp = {};
-      props.forEach((prop) => {
-        const { motionId } = prop;
-        if(!orderedProp[motionId]) { // if the prop doesnt exist
-          const { id, title, body, yrkanden, score, pdfUrl, url } = prop;
-          orderedProp[motionId] = { id, title, score, body, motionId, yrkanden, senders: [] };
-        }
-        const { partyId, party, politicianId, politician, pictureUrl } = prop;
-        orderedProp[motionId].senders.push({ 
-          partyId, 
-          politicianId, 
-          party, 
-          politician,
-          pictureUrl
-        });
-      })
-      res.json(orderedProp);
-    });
+      const PER_PAGE = 25;
+      const start = parseInt(req.params.p) * PER_PAGE;
+      console.log(start, PER_PAGE); 
+
+      const P_QUERY = mysql.format(QUERY, [start, PER_PAGE]);
+      con.query({
+        sql: P_QUERY
+      }, (err, props) => {
+        console.log(err);
+        let orderedProp = {};
+        props.forEach((prop) => {
+          const { motionId } = prop;
+          if(!orderedProp[motionId]) { // if the prop doesnt exist
+            const { id, title, body, yrkanden, score, pdfUrl, url } = prop;
+            orderedProp[motionId] = { id, title, score, body, motionId, yrkanden, url, pdfUrl, senders: [] };
+          }
+          const { partyId, party, politicianId, politician, pictureUrl } = prop;
+          orderedProp[motionId].senders.push({ 
+            partyId, 
+            politicianId, 
+            party, 
+            politician,
+            pictureUrl
+          });
+        })
+        res.json(orderedProp);
+      });
+
+    } else {
+      res.status(500).send('shitty poop');
+    }
 
   });
 
