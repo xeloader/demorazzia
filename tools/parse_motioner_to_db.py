@@ -20,11 +20,34 @@ PAGES = 512
 MOTIONS_PER_PAGE = 20
 START_AT = 189
 
+# Check if a proposition is already added by its motionId
 def propExists(motionId):
   query = "SELECT id FROM propositions WHERE motion_id = %s";
   cur.execute(query, [motionId])
   motion = cur.fetchone()
   return motion is not None
+
+# Extract date and name from a concatenated event string
+def extractEventData(eventString):
+  eventData = eventString.split(":", 1)
+  return {
+    "date": eventData[1],
+    "name": eventData[0]
+  }
+
+# Extract party and name from a concatenated politician string
+def extractPoliticianData(politicianString):
+  name = re.sub(r'\([^)]*\)', '', politicianString).strip()
+  party = re.findall('\((.*?)\)', politicianString)
+  if (len(party) > 0):
+    party = party[0].upper().strip()
+  return {
+    "name": name,
+    "party": party
+  }
+
+def joinFullUrl(path):
+  return "%s%s" % (url, path)
 
 for i in range(START_AT, PAGES + 1):
   for j in range(0, MOTIONS_PER_PAGE):
@@ -52,7 +75,11 @@ for i in range(START_AT, PAGES + 1):
       elif "tilldelat" in info.lower():
         dedicatedTo = info
       else:
-        handelser.append(info)
+        handelser.append(info.lower())
+
+    for event in handelser:
+      print(extractEventData(event))
+      # print(event)
 
     motion_url = "%s%s" % (url, html.find(class_="aspnetForm")['action'])
     pdf_url = html.find(class_="link-file file-type-pdf")
@@ -73,6 +100,7 @@ for i in range(START_AT, PAGES + 1):
     phtmls = html.findAll(class_="fellow-item-container") # personer som skickade in motionen.
     for phtml in phtmls:
       fullName = phtml.find(class_="fellow-name").text
+
       poliName = re.sub(r'\([^)]*\)', '', fullName).strip()
       poli = {
         "picture_url": phtml.img['src'],
@@ -81,6 +109,8 @@ for i in range(START_AT, PAGES + 1):
       }
       poli['party'] = re.findall('\((.*?)\)', fullName)[0].upper() # extract party from name
       politicians.append(poli)
+
+    exit();
 
     cur.execute("INSERT INTO propositions "
                 "(type, body, title, motion_id, url, pdf_url, dedicated_to, yrkanden, sender) "
@@ -131,6 +161,8 @@ for i in range(START_AT, PAGES + 1):
       print("Added politician %s as sender to propId %d as relationId %d" % (personName, propId, cur.lastrowid))
 
     print("Added %d senders to prop %s (%d)" % (len(politicians), title, propId))
+
+
 
     con.commit()
 
