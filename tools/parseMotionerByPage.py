@@ -29,8 +29,8 @@ c = mysql.connect(
 
 cur = c.cursor()
 
-# Check if a proposition is already added by its motionId
-def propExists(motionData):
+# Check if a motion is already added by its motionId
+def motionExists(motionData):
   motionId = motionData["motionId"]
   query = "SELECT id FROM propositions WHERE motion_id = %s"
   cur.execute(query, [motionId])
@@ -175,6 +175,11 @@ def storePerson(person):
   cur.execute(query, [partyId, person["name"], person['imageUrl'], person['url']])
   return cur.lastrowid # return new person id
 
+def storeSenderRelation(personId, motionId):
+  query = "INSERT INTO proposition_senders (proposition_id, politician_id) VALUES (%s, %s)";
+  cur.execute(query, [motionId, personId])
+  return cur.lastrowid # return new relation id
+
 for f in getMotionFiles():
 
   motion = {}
@@ -206,5 +211,5 @@ for f in getMotionFiles():
 # printX(extractPoliticianData("Balle Ballesson Korviosis (KP)"))
 # printX(extractEventData("Inlämnad       "))
 # printX(extractEventData("Inlämnad: 2017-08-19"))
-# printX(propExists(T_M_EXISTS))
-# printX(propExists(T_M_NOT_EXISTS))
+# printX(motionExists(T_M_EXISTS))
+# printX(motionExists(T_M_NOT_EXISTS))
