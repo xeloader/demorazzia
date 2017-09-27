@@ -101,18 +101,24 @@ def getPoliticians(html):
 
 # get information fields
 def getEvents(html):
-  htmlInfos = _getInfo(html).findAll(class_="medium-smaller")
-  return list(map(lambda html: extractEventData(html.text), htmlInfos))
+  info = _getInfo(html)
+  if info is not None:
+    htmlInfos = info.findAll(class_="medium-smaller")
+    return list(map(lambda html: extractEventData(html.text), htmlInfos))
 
 # get the title of a motion
 def getTitle(html):
-  string = _getHeader(html).find(class_='biggest').text
-  return string.strip()
+  header = _getHeader(html)
+  if header is not None:
+    string = header.find(class_='biggest').text
+    return string.strip()
 
 # get the id from motion
 def getMotionId(html):
-  string = _getHeader(html).find(class_='big').text
-  return extractIdFrom(string)
+  header = _getHeader(html)
+  if header is not None:
+    string = header.find(class_='big').text
+    return extractIdFrom(string)
 
 def getPdf(html):
   pdfHtml = html.find(class_="link-file file-type-pdf")
@@ -127,9 +133,10 @@ def getURL(html):
 # get event with key from a list with events
 def getKeyFromEvents(key, events):
   for event in events:
-    eventName = event["key"].lower()
-    if eventName == key.lower():
-      return event["value"]
+    if event is not None:
+      eventName = event["key"].lower()
+      if eventName == key.lower():
+        return event["value"]
 
 def getHtmlFromFile(file):
   motionFile = open(f, 'r').read()
@@ -250,8 +257,13 @@ def storeMotion(motion):
 files = getMotionFiles()
 i = 0
 end = len(files)
+START = 9000 # to skip motions, if run is aborted you may continue anywhere
 
 for f in files:
+
+  if i < START:
+    i = i + 1
+    continue
 
   printX("Parsing %s" % f, "m")
 
@@ -276,7 +288,7 @@ for f in files:
   # print info
   percentage = "{0:.2f}".format(i / end * 100)
   printX("Progress", "{}%".format(percentage))
-  
+
   mId = newStores["motionId"]
   if mId is not None:
     persons = ",".join(newStores["personIds"])
