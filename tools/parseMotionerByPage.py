@@ -139,7 +139,7 @@ def getKeyFromEvents(key, events):
         return event["value"]
 
 def getHtmlFromFile(file):
-  motionFile = open(f, 'r').read()
+  motionFile = open(file, 'r').read()
   return BeautifulSoup(motionFile, "html.parser")
 
 def getBodyFrom(html):
@@ -252,67 +252,3 @@ def storeMotion(motion):
     
   c.commit()
   return newStores
-
-
-files = getMotionFiles()
-i = 0
-end = len(files)
-START = 9000 # to skip motions, if run is aborted you may continue anywhere
-
-for f in files:
-
-  if i < START:
-    i = i + 1
-    continue
-
-  printX("Parsing %s" % f, "m")
-
-  motion = {}
-  html = getHtmlFromFile(f)
-  events = getEvents(html)
-
-  motion["motionId"] = getMotionId(html)
-  motion["added"] = getKeyFromEvents("inlämnad", events)
-  motion["category"] = getKeyFromEvents("motionskategori", events)
-  motion["assigned"] = getKeyFromEvents("tilldelat", events)
-  motion["title"] = getTitle(html)
-  motion["events"] = getEvents(html)
-  motion["url"] = getURL(html)
-  motion["pdf"] = getPdf(html)
-  motion["body"] = getBodyFrom(html)
-  motion["statements"] = getYrkandenFrom(html)
-  motion["politicians"] = getPoliticians(html)
-
-  newStores = storeMotion(motion)
-
-  # print info
-  percentage = "{0:.2f}".format(i / end * 100)
-  printX("Progress", "{}%".format(percentage))
-
-  mId = newStores["motionId"]
-  if mId is not None:
-    persons = ",".join(newStores["personIds"])
-    parties = ",".join(newStores["partyIds"])
-    relations = ",".join(newStores["relationIds"])
-
-    printX("Added (%s)" % (mId), "mot")
-    printX("Added (%s)" % (persons), "person")
-    printX("Added (%s)" % (parties), "party")
-    printX("Added (%s)" % (relations), "relation")
-  else:
-    printX("Already exists", "mot")
-
-  print("---------------------------")
-
-  i = i + 1
-
-  # pp.pprint(motion)
-
-#printX(getMotionFiles())
-# printX(extractEventData("Motionskategori: Fristående motion"))
-# printX(extractPoliticianData(""))
-# printX(extractPoliticianData("Balle Ballesson Korviosis (KP)"))
-# printX(extractEventData("Inlämnad       "))
-# printX(extractEventData("Inlämnad: 2017-08-19"))
-# printX(motionExists(T_M_EXISTS))
-# printX(motionExists(T_M_NOT_EXISTS))
