@@ -180,14 +180,86 @@ def storeSenderRelation(personId, motionId):
   cur.execute(query, [motionId, personId])
   return cur.lastrowid # return new relation id
 
-for f in getMotionFiles():
+def fetchSenderRelation(personId, motionId):
+  query = "SELECT id FROM proposition_senders WHERE politician_id = %s AND proposition_id = %s"
+  cur.execute(query, [personId, motionId])
+  rel = cur.fetchone()
+  if rel is not None:
+    return rel[0]
+
+
+def fetchMotionById(motionId):
+  query = "SELECT id FROM propositions WHERE motion_id = %s"
+  cur.execute(query, [motionId])
+  m = cur.fetchone()
+  if m is not None:
+    return m[0]
+
+# store a row in the persistent storage of motions and only that motion. No relations.
+def _storeMotion(motion):
+  m = motion
+  cur.execute("INSERT INTO propositions "
+              "(type, body, title, motion_id, url, pdf_url, dedicated_to, yrkanden, added, category) "
+              "VALUES "
+              "(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)", 
+              (m["category"], m["body"], m["title"], m["motionId"], m["url"], m["pdf"], m["assigned"], m["statements"], m["added"], m["category"]))
+  return cur.lastrowid # return new motion id
+
+def storeMotion(motion):
+
+  m = motion
+  newStores = {
+    "motionId": None,
+    "partyIds": [],
+    "personIds": [],
+    "relationIds": []
+  }
+  # indicate if a new motion was added or not
+
+  motionId = fetchMotionById(m["motionId"])
+  if motionId is None:
+    motionId = _storeMotion(motion)
+    newStores["motionId"] = motionId
+
+  for p in m["politicians"]:
+    party = p["party"]
+    name = p["name"]
+    partyId = fetchPartyBySymbol(party)
+    personId = fetchPersonByName(name)
+    relId = None
+
+    if partyId is not None and personId is not None:
+      relId = fetchSenderRelation(personId, motionId)
+
+    if partyId is None: # check if party exists
+      partyId = storeParty(party)
+      newStores["partyIds"].append(str(partyId))
+
+    if personId is None: # check if person exists
+      personId = storePerson(p)
+      newStores["personIds"].append(str(personId))
+
+    if relId is None: # check if relation between person and motion exists
+      relId = storeSenderRelation(personId, motionId) # store relation between person and motion
+      newStores["relationIds"].append(str(relId))
+    
+  c.commit()
+  return newStores
+
+
+files = getMotionFiles()
+i = 0
+end = len(files)
+
+for f in files:
+
+  printX("Parsing %s" % f, "m")
 
   motion = {}
   html = getHtmlFromFile(f)
   events = getEvents(html)
 
-
-  motion["id"] = getMotionId(html)
+  motion["motionId"] = getMotionId(html)
   motion["added"] = getKeyFromEvents("inlämnad", events)
   motion["category"] = getKeyFromEvents("motionskategori", events)
   motion["assigned"] = getKeyFromEvents("tilldelat", events)
@@ -196,14 +268,33 @@ for f in getMotionFiles():
   motion["url"] = getURL(html)
   motion["pdf"] = getPdf(html)
   motion["body"] = getBodyFrom(html)
-  motion["stating"] = getYrkandenFrom(html)
+  motion["statements"] = getYrkandenFrom(html)
   motion["politicians"] = getPoliticians(html)
 
-  printX("Parsing %s" % f)
+  newStores = storeMotion(motion)
 
-  pp.pprint(motion)
+  # print info
+  percentage = "{0:.2f}".format(i / end * 100)
+  printX("Progress", "{}%".format(percentage))
+  
+  mId = newStores["motionId"]
+  if mId is not None:
+    persons = ",".join(newStores["personIds"])
+    parties = ",".join(newStores["partyIds"])
+    relations = ",".join(newStores["relationIds"])
 
-  break
+    printX("Added (%s)" % (mId), "mot")
+    printX("Added (%s)" % (persons), "person")
+    printX("Added (%s)" % (parties), "party")
+    printX("Added (%s)" % (relations), "relation")
+  else:
+    printX("Already exists", "mot")
+
+  print("---------------------------")
+
+  i = i + 1
+
+  # pp.pprint(motion)
 
 #printX(getMotionFiles())
 # printX(extractEventData("Motionskategori: Fristående motion"))
