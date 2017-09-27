@@ -149,15 +149,31 @@ def fetchPartyBySymbol(symbol):
   cur.execute("SELECT id FROM parties WHERE symbol = %s", [symbol])
   partyData = cur.fetchone();
   if partyData is not None:
-    return partyData[0]
+    return partyData[0] # return party id
 
 def storeParty(symbol):
   query = ("INSERT INTO parties "
-                "(symbol) "
-                "VALUES "
-                "(%s)")
+            "(symbol) "
+            "VALUES "
+            "(%s)")
   cur.execute(query, [symbol])
-  return cur.lastrowid
+  return cur.lastrowid # return new party id
+
+def fetchPersonByName(name):
+  query = "SELECT id, name FROM politicians WHERE name = %s"
+  cur.execute(query, [name])
+  p = cur.fetchone()
+  if p is not None:
+    return p[0] # return person id
+
+def storePerson(person):
+  query = ("INSERT INTO politicians"
+            "(party_id, name, picture_url, url)"
+            "VALUES"
+            "(%s, %s, %s, %s)")
+  partyId = fetchPartyBySymbol(person["party"])
+  cur.execute(query, [partyId, person["name"], person['imageUrl'], person['url']])
+  return cur.lastrowid # return new person id
 
 for f in getMotionFiles():
 
