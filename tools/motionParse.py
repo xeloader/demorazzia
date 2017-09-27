@@ -1,6 +1,7 @@
 from parseMotionerByPage import *
 
 files = getMotionFiles()
+files.sort(reverse = True)
 i = 0
 end = len(files)
 START = 0 # to skip motions, if run is aborted you may continue anywhere
