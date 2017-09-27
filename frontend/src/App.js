@@ -66,7 +66,8 @@ class PropList extends Component {
   }
 
   fetchPropos(page) {
-    axios.get(`http://localhost:4000/props/${page}`).then((res) => {
+    const { hostname } = document.location;
+    axios.get(`http://${hostname}:4000/props/${page}`).then((res) => {
       const propos = Object.keys(res.data).map(key => res.data[key]); // transform to array
       this.setState({
         propos: propos
@@ -102,7 +103,9 @@ class PropListItem extends Component {
   handleVote(type) {
     return (e) => {
       const { id } = this.props;
-      axios.post(`http://localhost:4000/props/${id}`, {
+      const { hostname } = document.location;
+      
+      axios.post(`http://${hostname}:4000/props/${id}`, {
         action: 'vote',
         value: type
       }).then((res) => {
