@@ -26,3 +26,4 @@ motioner/
 sidor/
 *.shit.*
 *build/
+__pycache__
