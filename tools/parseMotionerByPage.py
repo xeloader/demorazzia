@@ -145,6 +145,20 @@ def getYrkandenFrom(html):
   if yrkandenHtml is not None:
     return yrkandenHtml.getText().strip()
 
+def fetchPartyBySymbol(symbol):
+  cur.execute("SELECT id FROM parties WHERE symbol = %s", [symbol])
+  partyData = cur.fetchone();
+  if partyData is not None:
+    return partyData[0]
+
+def storeParty(symbol):
+  query = ("INSERT INTO parties "
+                "(symbol) "
+                "VALUES "
+                "(%s)")
+  cur.execute(query, [symbol])
+  return cur.lastrowid
+
 for f in getMotionFiles():
 
   motion = {}
