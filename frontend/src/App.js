@@ -2,8 +2,8 @@ import React, { Component } from 'react';
 import './App.css';
 import axios from 'axios';
 
-const UP = 'UP';
-const DOWN = 'DOWN';
+const UP = 1;
+const DOWN = -1;
 const NEXT = 'NEXT';
 const PREV = 'PREV';
 
@@ -20,7 +20,7 @@ class App extends Component {
 
   handlePageNav(type) {
     return (e) => {
-      const { page } = this.state; 
+      const { page } = this.state;
       this.setState({
         page: (type === NEXT) ? page+1 : page-1
       });
@@ -77,8 +77,8 @@ class PropList extends Component {
 
   render() {
 
-    const listNode = (this.state.propos.length > 0) ? 
-                      this.state.propos.map((propo) => 
+    const listNode = (this.state.propos.length > 0) ?
+                      this.state.propos.map((propo) =>
                         <PropListItem key={ propo.id } { ...propo } />
                       ) :
                       <h1>Loading...</h1>;
@@ -99,12 +99,12 @@ class PropListItem extends Component {
       score: score
     };
   }
-  
+
   handleVote(type) {
     return (e) => {
       const { id } = this.props;
       const { hostname } = document.location;
-      
+
       axios.post(`http://${hostname}:4000/props/${id}`, {
         action: 'vote',
         value: type
