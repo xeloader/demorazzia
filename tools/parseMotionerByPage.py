@@ -24,7 +24,8 @@ c = mysql.connect(
   database=conf["database"],
   port=conf["port"],
   user=conf["user"],
-  password=conf["password"]
+  password=conf["password"],
+  charset='utf8'
 )
 
 cur = c.cursor()
@@ -63,7 +64,7 @@ def extractPoliticianData(politicianString):
     return None
 
 def extractIdFrom(string):
-  return string.replace("Motion", "").strip()
+  return string.replace("Motion", "").strip().split(" ")[0].strip()
 
 # Get all the motions from the local file system
 def getMotionFiles():
@@ -76,7 +77,7 @@ def getMotionFiles():
 
 # get motion header from website
 def _getHeader(html):
-  return html.find(class_="top-type-one")
+  return html.find(class_="module-header")
 
 def _getInfo(html):
   return html.find(class_="component-document-activity")
@@ -208,7 +209,7 @@ def _storeMotion(motion):
   cur.execute("INSERT INTO propositions "
               "(type, body, title, motion_id, url, pdf_url, dedicated_to, yrkanden, added, category) "
               "VALUES "
-              "(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)", 
+              "(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
               (m["category"], m["body"], m["title"], m["motionId"], m["url"], m["pdf"], m["assigned"], m["statements"], m["added"], m["category"]))
   return cur.lastrowid # return new motion id
 
@@ -249,6 +250,6 @@ def storeMotion(motion):
     if relId is None: # check if relation between person and motion exists
       relId = storeSenderRelation(personId, motionId) # store relation between person and motion
       newStores["relationIds"].append(str(relId))
-    
+
   c.commit()
   return newStores
