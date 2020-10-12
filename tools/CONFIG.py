@@ -7,8 +7,8 @@ SQL_CONFIG = {
   "host": "127.0.0.1",
   "database": "demorazzia",
   "port": 8889,
-  "user": "***REMOVED***",
-  "password": "***REMOVED***"
+  "user": "",
+  "password": ""
 }
 
 BL_FILES = [".DS_Store"]

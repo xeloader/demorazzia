@@ -11,8 +11,8 @@ const PORT = ENV === 'TEST' ? 4001 : 4000;
 
 const con = mysql.createConnection({
   host: '127.0.0.1',
-  user: '***REMOVED***',
-  password: '***REMOVED***',
+  user: '',
+  password: '',
   database: 'demorazzia',
   port: 8889
 });
